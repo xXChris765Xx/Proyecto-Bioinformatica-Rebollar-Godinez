@@ -14,7 +14,8 @@ rule all:
     input:
         "reference/GCF_000005845.2_ASM584v2_genomic.fna",
         "data/SRR2584863_1.fastq.gz",
-        "data/SRR2584863_2.fastq.gz"
+        "data/SRR2584863_2.fastq.gz",
+        "results/bam/SRR2584863.sorted.bam"
 
 # ==============================================================================
 # REGLAS DE OBTENCIÓN DE DATOS
@@ -40,4 +41,46 @@ rule get_reads:
         mkdir -p data
         wget -qO {output.r1} {READ1_URL}
         wget -qO {output.r2} {READ2_URL}
+        """
+# ==============================================================================
+# REGLAS DE ALINEAMIENTO (MAPPING)
+# ==============================================================================
+
+# ------ NOTA -------
+# En lugar de guardar un archivo temporal gigantesco en formato SAM (texto plano) 
+# y luego leerlo de nuevo para convertirlo a BAM (binario) y ordenarlo, conectamos 
+# la salida de bwa directamente a la entrada de samtools.
+
+# Regla 3: Indexar el genoma de referencia
+rule bwa_index:
+    input:
+        "reference/GCF_000005845.2_ASM584v2_genomic.fna"
+    output:
+        # BWA genera múltiples archivos de índice. Con rastrear uno de ellos 
+        # (como el .bwt) Snakemake sabrá cuándo el proceso ha terminado.
+        "reference/GCF_000005845.2_ASM584v2_genomic.fna.bwt"
+    shell:
+        """
+        bwa index {input}
+        """
+
+# Regla 4: Mapear las lecturas contra el genoma y ordenar el BAM resultante
+rule bwa_map:
+    input:
+        ref="reference/GCF_000005845.2_ASM584v2_genomic.fna",
+        # Incluimos el índice como input para obligar a Snakemake a ejecutar 
+        # bwa_index ANTES que bwa_map
+        idx="reference/GCF_000005845.2_ASM584v2_genomic.fna.bwt",
+        r1="data/SRR2584863_1.fastq.gz",
+        r2="data/SRR2584863_2.fastq.gz"
+    output:
+        "results/bam/SRR2584863.sorted.bam"
+    threads: 2 # Podemos decirle a Snakemake que use múltiples núcleos
+    shell:
+        """
+        mkdir -p results/bam
+        
+        # Mapear con BWA MEM, convertir a BAM y ordenar al vuelo
+        bwa mem -t {threads} {input.ref} {input.r1} {input.r2} | \
+        samtools sort -@ {threads} -o {output}
         """
