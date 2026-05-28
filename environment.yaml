@@ -9,3 +9,5 @@ dependencies:
   - samtools
   - bcftools
   - fastqc
+  - trimmomatic
+  - picard
