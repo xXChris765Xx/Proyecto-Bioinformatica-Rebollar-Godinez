@@ -17,7 +17,9 @@ rule all:
         "data/SRR2584863_2.fastq.gz",
         "results/bam/SRR2584863.sorted.bam",
         "results/fastqc/SRR2584863_1_fastqc.html",
-        "results/fastqc/SRR2584863_2_fastqc.html"
+        "results/fastqc/SRR2584863_2_fastqc.html",
+        "results/bam/SRR2584863.sorted.bam.bai",
+        "results/vcf/SRR2584863.vcf"             
 
 # ==============================================================================
 # REGLAS DE OBTENCIÓN DE DATOS
@@ -105,4 +107,37 @@ rule fastqc:
         mkdir -p results/fastqc
         # El comando fastqc requiere que le especifiquemos el directorio de salida
         fastqc {input} -o results/fastqc/
+        """
+
+# ==============================================================================
+# REGLAS DE VARIANTES (VARIANT CALLING)
+# ==============================================================================
+
+# Regla 6: Generar el índice para el archivo binario BAM
+rule samtools_index:
+    input:
+        "results/bam/{sample}.sorted.bam"
+    output:
+        "results/bam/{sample}.sorted.bam.bai"
+    shell:
+        """
+        samtools index {input}
+        """
+
+# Regla 7: Llamado de variantes utilizando bcftools
+rule variant_calling:
+    input:
+        ref="reference/GCF_000005845.2_ASM584v2_genomic.fna",
+        bam="results/bam/{sample}.sorted.bam",
+        # Añadimos el índice como input para forzar a que la regla 6 termine primero
+        bai="results/bam/{sample}.sorted.bam.bai"
+    output:
+        "results/vcf/{sample}.vcf"
+    shell:
+        """
+        mkdir -p results/vcf
+        
+        # 1. mpileup compila los datos de alineamiento (-Ou evita comprimir el paso intermedio)
+        # 2. call -mv extrae únicamente las variantes encontradas (-Ov genera formato VCF estándar)
+        bcftools mpileup -Ou -f {input.ref} {input.bam} | bcftools call -mv -Ov -o {output}
         """
