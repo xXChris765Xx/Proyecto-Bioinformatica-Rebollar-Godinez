@@ -15,7 +15,9 @@ rule all:
         "reference/GCF_000005845.2_ASM584v2_genomic.fna",
         "data/SRR2584863_1.fastq.gz",
         "data/SRR2584863_2.fastq.gz",
-        "results/bam/SRR2584863.sorted.bam"
+        "results/bam/SRR2584863.sorted.bam",
+        "results/fastqc/SRR2584863_1_fastqc.html",
+        "results/fastqc/SRR2584863_2_fastqc.html"
 
 # ==============================================================================
 # REGLAS DE OBTENCIÓN DE DATOS
@@ -83,4 +85,24 @@ rule bwa_map:
         # Mapear con BWA MEM, convertir a BAM y ordenar al vuelo
         bwa mem -t {threads} {input.ref} {input.r1} {input.r2} | \
         samtools sort -@ {threads} -o {output}
+        """
+
+# ==============================================================================
+# REGLAS DE CONTROL DE CALIDAD
+# ==============================================================================
+
+# Regla 5: Control de calidad de los reads crudos
+rule fastqc:
+    input:
+        # FastQC analizará los archivos FASTQ que descargamos
+        "data/{sample}.fastq.gz"
+    output:
+        # Genera un HTML interactivo y un ZIP con los datos
+        html="results/fastqc/{sample}_fastqc.html",
+        zip="results/fastqc/{sample}_fastqc.zip"
+    shell:
+        """
+        mkdir -p results/fastqc
+        # El comando fastqc requiere que le especifiquemos el directorio de salida
+        fastqc {input} -o results/fastqc/
         """
