@@ -1,0 +1,10 @@
+name: wgs_pipeline
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - snakemake >=7.0
+  - bwa
+  - samtools
+  - bcftools

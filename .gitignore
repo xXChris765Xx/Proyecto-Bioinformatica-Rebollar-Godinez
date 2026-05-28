@@ -1,0 +1,7 @@
+# Ignorar datos crudos y resultados
+data/
+results/
+
+# Ignorar archivos de sistema y entornos
+.snakemake/
+.DS_Store
