@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  wgs-pipeline:
+    # Construye la imagen usando el Dockerfile de esta misma carpeta
+    build: .
+    # Nombre del contenedor cuando esté corriendo
+    container_name: wgs-snakemake
+    # Volumen que conecta la carpeta actual de tu máquina ("./") con la carpeta "/app" del contenedor.
+    volumes:
+      - ./:/app
