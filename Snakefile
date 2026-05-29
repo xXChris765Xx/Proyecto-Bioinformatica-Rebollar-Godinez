@@ -121,8 +121,6 @@ rule bwa_map:
         samtools sort -@ {threads} -o {output}
         """
 
-
-# Regla Intermedia: Eliminar duplicados de PCR
 # Regla Intermedia: Eliminar duplicados de PCR
 rule mark_duplicates:
     input:
@@ -138,7 +136,6 @@ rule mark_duplicates:
             M={output.metrics} \
             REMOVE_DUPLICATES=true
         """
-
 
 # ==============================================================================
 # REGLAS DE CONTROL DE CALIDAD
